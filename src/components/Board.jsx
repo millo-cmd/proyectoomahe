@@ -30,7 +30,7 @@ const Board = ({ tasks, setTasks }) => {
                     <Droppable key={column.id} droppableId={column.id.toString()}>
                         {(provided) => (
                             <div
-                                className="task-column"
+                                className='taskColumn'
                                 {...provided.droppableProps}
                                 ref={provided.innerRef}
                             >
