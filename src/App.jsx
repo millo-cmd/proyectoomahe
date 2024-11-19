@@ -1,207 +1,142 @@
-import React, { useState } from "react";
-import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
+import React, { useState, useEffect } from "react";
+import { DndContext } from "@dnd-kit/core";
+import Column from "./components/Column"; // Asegúrate de que la ruta sea correcta
 import "./App.css";
 
-const initialData = {
-    tasks: {
-        "task-1": { id: "task-1", content: "Task 1" },
-        "task-2": { id: "task-2", content: "Task 2" },
-        "task-3": { id: "task-3", content: "Task 3" },
-    },
-    columns: {
-        "column-1": {
-            id: "column-1",
-            title: "Pending",
-            taskIds: ["task-1"],
-        },
-        "column-2": {
-            id: "column-2",
-            title: "In Progress",
-            taskIds: ["task-2"],
-        },
-        "column-3": {
-            id: "column-3",
-            title: "Completed",
-            taskIds: ["task-3"],
-        },
-    },
-    columnOrder: ["column-1", "column-2", "column-3"],
-};
-
 const App = () => {
-    const [user, setUser] = useState(null);
-    const [data, setData] = useState(initialData);
+    const [tasks, setTasks] = useState({});
+    const [columns, setColumns] = useState({
+        todo: { title: "No Iniciada", taskIds: [] },
+        inProgress: { title: "En progreso", taskIds: [] },
+        done: { title: "Finalizada", taskIds: [] },
+    });
 
-    const handleLogin = (credentials) => {
-        console.log("Usuario autenticado con:", credentials);
-        setUser({ email: credentials.email });
-    };
+    useEffect(() => {
+        const fetchTasks = async () => {
+            const response = await fetch("http://localhost:4000/api/v1/task");
+            const data = await response.json();
+            console.log(data);
 
-    const handleLogout = () => {
-        setUser(null);
-    };
+            const taskMap = {};
+            const columnMap = { todo: [], inProgress: [], done: [] };
 
-    const onDragEnd = (result) => {
-        const { destination, source, draggableId } = result;
+            data.tasks.forEach((task) => {
+                const id = task._id;
+                taskMap[id] = {
+                    id,
+                    title: task.nombre,
+                    description: task.descripcion,
+                    progresion: task.progresion,
+                };
 
-        if (!destination) return;
+                switch (task.progresion) {
+                    case "No Iniciada":
+                        columnMap.todo.push(id);
+                        break;
+                    case "En progreso":
+                        columnMap.inProgress.push(id);
+                        break;
+                    case "Finalizada":
+                        columnMap.done.push(id);
+                        break;
+                    default:
+                        break;
+                }
+            });
 
-        const start = data.columns[source.droppableId];
-        const finish = data.columns[destination.droppableId];
+            setTasks(taskMap);
+            setColumns((prevColumns) => ({
+                ...prevColumns,
+                todo: { ...prevColumns.todo, taskIds: columnMap.todo },
+                inProgress: { ...prevColumns.inProgress, taskIds: columnMap.inProgress },
+                done: { ...prevColumns.done, taskIds: columnMap.done },
+            }));
+        };
 
-        if (start === finish) {
-            const newTaskIds = Array.from(start.taskIds);
-            newTaskIds.splice(source.index, 1);
-            newTaskIds.splice(destination.index, 0, draggableId);
+        fetchTasks();
+    }, []);
 
-            const newColumn = {
-                ...start,
-                taskIds: newTaskIds,
-            };
+    const onDragEnd = async (event) => {
+        const { active, over } = event;
 
-            const newData = {
-                ...data,
-                columns: {
-                    ...data.columns,
-                    [newColumn.id]: newColumn,
+        if (!over) return;
+
+        const sourceColumn = Object.keys(columns).find((key) =>
+            columns[key].taskIds.includes(active.id)
+        );
+        const destinationColumn = over.id;
+
+        if (sourceColumn !== destinationColumn) {
+            // Update the progression of the task based on the destination column
+            let newProgression = "";
+            switch (destinationColumn) {
+                case "todo":
+                    newProgression = "No Iniciada";
+                    break;
+                case "inProgress":
+                    newProgression = "En progreso";
+                    break;
+                case "done":
+                    newProgression = "Finalizada";
+                    break;
+                default:
+                    break;
+            }
+
+            // Make API request to update the task's progression
+            const taskId = active.id;
+            await fetch(`http://localhost:4000/api/v1/task/${taskId}`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
                 },
-            };
+                body: JSON.stringify({ progresion: newProgression }),
+            });
 
-            setData(newData);
-            return;
-        }
+            // Update columns and tasks locally after the task is moved
+            setColumns((prevColumns) => {
+                const sourceTaskIds = [...prevColumns[sourceColumn].taskIds];
+                const destinationTaskIds = [...prevColumns[destinationColumn].taskIds];
 
-        const startTaskIds = Array.from(start.taskIds);
-        startTaskIds.splice(source.index, 1);
-        const newStart = {
-            ...start,
-            taskIds: startTaskIds,
-        };
+                sourceTaskIds.splice(sourceTaskIds.indexOf(active.id), 1);
+                destinationTaskIds.push(active.id);
 
-        const finishTaskIds = Array.from(finish.taskIds);
-        finishTaskIds.splice(destination.index, 0, draggableId);
-        const newFinish = {
-            ...finish,
-            taskIds: finishTaskIds,
-        };
+                return {
+                    ...prevColumns,
+                    [sourceColumn]: { ...prevColumns[sourceColumn], taskIds: sourceTaskIds },
+                    [destinationColumn]: {
+                        ...prevColumns[destinationColumn],
+                        taskIds: destinationTaskIds,
+                    },
+                };
+            });
 
-        const newData = {
-            ...data,
-            columns: {
-                ...data.columns,
-                [newStart.id]: newStart,
-                [newFinish.id]: newFinish,
-            },
-        };
-
-        setData(newData);
-    };
-
-    return (
-        <div className="App">
-            {user ? (
-                <>
-                    <header>
-                        <h1>Task Manager</h1>
-                        <button onClick={handleLogout}>Cerrar sesión</button>
-                    </header>
-                    <DragDropContext onDragEnd={onDragEnd}>
-                        <div className="columns">
-                            {data.columnOrder.map((columnId) => {
-                                const column = data.columns[columnId];
-                                const tasks = column.taskIds.map((taskId) => data.tasks[taskId]);
-
-                                return <Column key={column.id} column={column} tasks={tasks} />;
-                            })}
-                        </div>
-                    </DragDropContext>
-                </>
-            ) : (
-                <Login onLogin={handleLogin} />
-            )}
-        </div>
-    );
-};
-
-const Login = ({ onLogin }) => {
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
-
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        if (email && password) {
-            onLogin({ email, password });
-        } else {
-            alert("Por favor, completa todos los campos");
+            // Update task's local state with new progression
+            setTasks((prevTasks) => ({
+                ...prevTasks,
+                [active.id]: {
+                    ...prevTasks[active.id],
+                    progresion: newProgression,
+                },
+            }));
         }
     };
 
     return (
-        <div className="login-container">
-            <h2>Iniciar Sesión</h2>
-            <form onSubmit={handleSubmit}>
-                <div>
-                    <label htmlFor="email">Email:</label>
-                    <input
-                        type="email"
-                        id="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        required
-                    />
+        <DndContext onDragEnd={onDragEnd}>
+            <div className="App">
+                <h1>Task Manager</h1>
+                <div className="board">
+                    {Object.entries(columns).map(([columnId, column]) => (
+                        <Column
+                            key={columnId}
+                            title={column.title}
+                            tasks={column.taskIds.map((taskId) => tasks[taskId])}
+                        />
+                    ))}
                 </div>
-                <div>
-                    <label htmlFor="password">Contraseña:</label>
-                    <input
-                        type="password"
-                        id="password"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        required
-                    />
-                </div>
-                <button type="submit">Ingresar</button>
-            </form>
-        </div>
-    );
-};
-
-const Column = ({ column, tasks }) => {
-    return (
-        <div className="column">
-            <h2>{column.title}</h2>
-            <Droppable droppableId={column.id}>
-                {(provided) => (
-                    <div
-                        className="taskList"
-                        {...provided.droppableProps}
-                        ref={provided.innerRef}
-                    >
-                        {tasks.map((task, index) => (
-                            <Task key={task.id} task={task} index={index} />
-                        ))}
-                        {provided.placeholder}
-                    </div>
-                )}
-            </Droppable>
-        </div>
-    );
-};
-
-const Task = ({ task, index }) => {
-    return (
-        <Draggable draggableId={task.id} index={index}>
-            {(provided) => (
-                <div
-                    className="task"
-                    {...provided.draggableProps}
-                    {...provided.dragHandleProps}
-                    ref={provided.innerRef}
-                >
-                    {task.content}
-                </div>
-            )}
-        </Draggable>
+            </div>
+        </DndContext>
     );
 };
 
