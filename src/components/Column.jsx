@@ -1,69 +1,31 @@
 import React from "react";
 import Task from "./Task";
 
-const Column = ({ title, tasks, setTasks }) => {
-  console.log(`Tareas en la columna "${title}":`, tasks);
 
-  const handleDrop = async (e) => {
-    e.preventDefault();
-    const taskId = e.dataTransfer.getData("taskId");
-    console.log("Task ID recibido en handleDrop:", taskId);
+const Column = ({ columnId, title, tasks, onTaskDrop }) => {
+  console.log("Props recibidas en Column:", { columnId, title, tasks, onTaskDrop });
+  const handleDragOver = (event) => {
+    event.preventDefault();
+  };
 
-    if (!taskId) {
-      console.error("Error: No se recibió un taskId válido en el evento de drop.");
-      return;
-    }
-
-    try {
-      const response = await fetch(`/api/v1/task/update/${taskId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ progresion: title }),
-      });
-
-      if (!response.ok) {
-        console.error("Error al actualizar la tarea:", response.statusText);
-        return;
-      }
-
-      const updatedTask = await response.json();
-      console.log("Tarea actualizada:", updatedTask);
-
-      setTasks((prev) => {
-        const updatedTasks = { ...prev };
-        const taskToMove = Object.values(prev)
-          .flat()
-          .find((task) => task._id === taskId);
-
-        if (taskToMove) {
-          updatedTasks[taskToMove.progresion] = updatedTasks[taskToMove.progresion].filter(
-            (t) => t._id !== taskId
-          );
-          taskToMove.progresion = title;
-          updatedTasks[title].push(taskToMove);
-        }
-
-        return updatedTasks;
-      });
-    } catch (error) {
-      console.error("Error en la solicitud de actualización:", error);
+  const handleDrop = (event) => {
+    event.preventDefault();
+    const taskId = event.dataTransfer.getData("text/plain");
+    console.log("handleDrop invocado:", { taskId, columnId, onTaskDrop });
+    if (onTaskDrop) {
+      onTaskDrop(taskId, columnId);
+    } else {
+      console.error("onTaskDrop no está definido");
     }
   };
 
+
   return (
-    <div
-      className="column"
-      onDragOver={(e) => e.preventDefault()}
-      onDrop={handleDrop}
-    >
+    <div className="column" onDragOver={handleDragOver} onDrop={handleDrop}>
       <h2>{title}</h2>
-      <div className="task-list">
-        {tasks.length > 0 ? (
-          tasks.map((task) => <Task key={task._id} task={task} />)
-        ) : (
-          <p>No hay tareas</p>
-        )}
-      </div>
+      {tasks.map((task) => (
+        <Task key={task.id} task={task} />
+      ))}
     </div>
   );
 };

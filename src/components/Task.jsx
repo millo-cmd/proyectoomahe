@@ -1,19 +1,14 @@
 import React from "react";
 
 const Task = ({ task }) => {
-  const handleDragStart = (e) => {
-    e.dataTransfer.setData("taskId", task._id); // Configura el ID de la tarea
-    console.log("Task ID en DragStart:", task._id); // Verifica el ID configurado
+  const handleDragStart = (event) => {
+    event.dataTransfer.setData("text/plain", task.id);
   };
 
   return (
-    <div
-      className="task"
-      draggable
-      onDragStart={handleDragStart}
-    >
-      <h3>{task.nombre || "Sin nombre"}</h3>
-      <p>{task.descripcion || "Sin descripción"}</p>
+    <div className="task" draggable onDragStart={handleDragStart}>
+      <h3>{task.title}</h3>
+      <p>{task.description}</p>
     </div>
   );
 };
