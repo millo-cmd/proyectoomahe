@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { DndContext } from "@dnd-kit/core";
-import Column from "./components/Column"; // Asegúrate de que la ruta sea correcta
+import Column from "./components/Column";
 import "./App.css";
 
 const App = () => {
