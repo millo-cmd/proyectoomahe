@@ -1,8 +1,9 @@
-import React from "react";
+import React from 'react';
 
-const Task = ({ task }) => {
+function Task({ task }) {
   const handleDragStart = (event) => {
-    event.dataTransfer.setData("text/plain", task.id);
+    console.log(`Arrastrando tarea con id: ${task.id}`);
+    event.dataTransfer.setData('taskId', task.id);
   };
 
   return (
@@ -11,6 +12,6 @@ const Task = ({ task }) => {
       <p>{task.description}</p>
     </div>
   );
-};
+}
 
 export default Task;

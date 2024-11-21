@@ -1,33 +1,30 @@
-import React from "react";
-import Task from "./Task";
+import React from 'react';
+import Task from './Task';
 
+function Column({ columnId, title, tasks, onTaskDrop }) {
+  const handleDrop = (event) => {
+    event.preventDefault();
+    const taskId = event.dataTransfer.getData('taskId');
+    console.log(`Tarea dropeada con id: ${taskId} en columna: ${columnId}`); // Verifica que columnId no sea undefined
+    if (onTaskDrop) {
+      onTaskDrop(taskId, columnId);
+    }
+  };
 
-const Column = ({ columnId, title, tasks, onTaskDrop }) => {
-  console.log("Props recibidas en Column:", { columnId, title, tasks, onTaskDrop });
   const handleDragOver = (event) => {
     event.preventDefault();
   };
 
-  const handleDrop = (event) => {
-    event.preventDefault();
-    const taskId = event.dataTransfer.getData("text/plain");
-    console.log("handleDrop invocado:", { taskId, columnId, onTaskDrop });
-    if (onTaskDrop) {
-      onTaskDrop(taskId, columnId);
-    } else {
-      console.error("onTaskDrop no está definido");
-    }
-  };
-
-
   return (
-    <div className="column" onDragOver={handleDragOver} onDrop={handleDrop}>
+    <div className="column" onDrop={handleDrop} onDragOver={handleDragOver}>
       <h2>{title}</h2>
-      {tasks.map((task) => (
-        <Task key={task.id} task={task} />
-      ))}
+      <div className="task-list">
+        {tasks.map((task) => (
+          <Task key={task.id} task={task} />
+        ))}
+      </div>
     </div>
   );
-};
+}
 
 export default Column;

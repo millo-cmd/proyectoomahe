@@ -1,112 +1,105 @@
-import React, { useState, useEffect } from "react";
-import Column from "./Column";
+import React, { useState, useEffect } from 'react';
+import Column from './Column';
 
-const Dashboard = () => {
-  const [tasks, setTasks] = useState({});
+function Dashboard() {
   const [columns, setColumns] = useState({
-    todo: { title: "No Iniciada", taskIds: [] },
-    inProgress: { title: "En Proceso", taskIds: [] },
-    done: { title: "Finalizado", taskIds: [] },
+    "No Iniciada": [],
+    "En progreso": [],
+    "Finalizado": [],
   });
 
   useEffect(() => {
     const fetchTasks = async () => {
-      const response = await fetch("http://localhost:4000/api/v1/task");
-      const { tasks: fetchedTasks } = await response.json();
+      try {
+        const response = await fetch('http://localhost:4000/api/v1/task/');
+        const data = await response.json();
 
-      const taskMap = {};
-      const columnMap = { todo: [], inProgress: [], done: [] };
-
-      fetchedTasks.forEach((task) => {
-        const id = task._id;
-        taskMap[id] = {
-          id,
-          title: task.nombre,
-          description: task.descripcion,
+        const groupedColumns = {
+          "No Iniciada": [],
+          "En progreso": [],
+          "Finalizado": [],
         };
 
-        switch (task.progresion) {
-          case "No Iniciada":
-            columnMap.todo.push(id);
-            break;
-          case "En Progreso":
-            columnMap.inProgress.push(id);
-            break;
-          case "Finalizada":
-            columnMap.done.push(id);
-            break;
-          default:
-            break;
-        }
-      });
+        const tasksWithIds = data.tasks.map((task) => ({
+          ...task,
+          id: task.id || task._id, // Garantizar que id exista
+        }));
 
-      setTasks(taskMap);
-      setColumns((prevColumns) => ({
-        ...prevColumns,
-        todo: { ...prevColumns.todo, taskIds: columnMap.todo },
-        inProgress: { ...prevColumns.inProgress, taskIds: columnMap.inProgress },
-        done: { ...prevColumns.done, taskIds: columnMap.done },
-      }));
+        tasksWithIds.forEach((task) => {
+          groupedColumns[task.progresion]?.push(task);
+        });
+
+        setColumns(groupedColumns);
+      } catch (error) {
+        console.error('Error al cargar las tareas:', error);
+      }
     };
 
     fetchTasks();
   }, []);
 
-  const handleTaskDrop = async (taskId, columnId) => {
-    console.log("handleTaskDrop invocado con:", taskId, columnId);
+  const handleTaskDrop = async (taskId, targetColumnId) => {
+    console.log(`handleTaskDrop llamado con taskId: ${taskId} y targetColumnId: ${targetColumnId}`);
+
     const endpointMap = {
-      todo: "updateStatusToDo",
-      inProgress: "updateStatusInProgress",
-      done: "updateStatusFinished",
+      "No Iniciada": "updateStatusToDo",
+      "En progreso": "updateStatusInProgress",
+      "Finalizado": "updateStatusFinished",
     };
 
-    const endpoint = endpointMap[columnId];
-    if (!endpoint) return;
+    const endpoint = endpointMap[targetColumnId];
 
-    try {
-      await fetch(`http://localhost:4000/api/v1/task/${endpoint}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: taskId }),
-      });
+    if (endpoint) {
+      try {
+        const response = await fetch(`http://localhost:4000/api/v1/task/${endpoint}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id: taskId }),
+        });
 
-      setColumns((prevColumns) => {
-        const sourceColumnId = Object.keys(prevColumns).find((key) =>
-          prevColumns[key].taskIds.includes(taskId)
-        );
+        const result = await response.json();
+        console.log('Respuesta del backend:', result);
 
-        if (!sourceColumnId) return prevColumns;
+        if (response.ok) {
+          const updatedResponse = await fetch('http://localhost:4000/api/v1/task/');
+          const updatedData = await updatedResponse.json();
 
-        const sourceTaskIds = [...prevColumns[sourceColumnId].taskIds];
-        const destinationTaskIds = [...prevColumns[columnId].taskIds];
+          const groupedColumns = {
+            "No Iniciada": [],
+            "En progreso": [],
+            "Finalizado": [],
+          };
 
-        sourceTaskIds.splice(sourceTaskIds.indexOf(taskId), 1);
-        destinationTaskIds.push(taskId);
+          updatedData.tasks.forEach((task) => {
+            groupedColumns[task.progresion]?.push(task);
+          });
 
-        return {
-          ...prevColumns,
-          [sourceColumnId]: { ...prevColumns[sourceColumnId], taskIds: sourceTaskIds },
-          [columnId]: { ...prevColumns[columnId], taskIds: destinationTaskIds },
-        };
-      });
-    } catch (error) {
-      console.error("Error al actualizar la progresión:", error);
+          setColumns(groupedColumns);
+        } else {
+          console.error('Error al actualizar la tarea:', result.message);
+        }
+      } catch (error) {
+        console.error('Error al realizar la solicitud:', error);
+      }
     }
   };
 
   return (
     <div className="dashboard">
-      {Object.entries(columns).map(([columnId, column]) => (
-        <Column
-          key={columnId}
-          columnId={columnId}
-          title={column.title}
-          tasks={column.taskIds.map((taskId) => tasks[taskId])}
-          onTaskDrop={handleTaskDrop}
-        />
-      ))}
+      {Object.entries(columns).map(([columnId, tasks]) => {
+        console.log(`Column ID: ${columnId}`, tasks); // Verifica que columnId no sea undefined
+        return (
+          <Column
+            key={columnId}
+            columnId={columnId} // Pasar correctamente columnId
+            title={columnId}
+            tasks={tasks}
+            onTaskDrop={handleTaskDrop}
+          />
+        );
+      })}
     </div>
   );
-};
+}
 
 export default Dashboard;
