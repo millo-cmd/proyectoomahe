@@ -1,9 +1,8 @@
 import '../styles/login.css';
-
 import { useNavigate } from "react-router-dom";
 import React, { useState } from "react";
 
-const Login = ({setIsAuthenticated}) => {
+const Login = ({ setIsAuthenticated }) => {
     const [email, setEmail] = useState("");
     const [pass, setPassword] = useState("");
     const navigate = useNavigate();
@@ -19,23 +18,22 @@ const Login = ({setIsAuthenticated}) => {
             headers: {
                 "Content-Type": "application/json"
             },
-            body: JSON.stringify({ email, pass })
+            body: JSON.stringify({ email: email, pass: pass })
         })
         .then(response => response.json()) // Convierte la respuesta a JSON
-        .then(response => {
-            if(response.success) {
-                setIsAuthenticated(true);
-                navigate('/organization');
-                
-            }else{
+        .then(data => {
+            if (data.success) {
+                localStorage.setItem('token', data.token); // Guarda el token en localStorage
+                setIsAuthenticated(true);  // Llama a setIsAuthenticated si lo necesitas
+                navigate('/');  // Redirige a la ruta principal (privada)
+            } else {
                 alert('Credenciales incorrectas');
-            }      
+            }
         })
         .catch(error => {
             console.error("Error:", error);
         });
-    }
-
+    };
 
     return (
         <section className="login-container">
@@ -64,7 +62,6 @@ const Login = ({setIsAuthenticated}) => {
                     </div>
                     <button type="submit">Ingresar</button>
                 </form>
-                <h3>  </h3>
             </div>
         </section>
     );
