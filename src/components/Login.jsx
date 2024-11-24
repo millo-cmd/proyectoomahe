@@ -2,37 +2,25 @@ import '../styles/login.css';
 import { useNavigate } from "react-router-dom";
 import React, { useState } from "react";
 
+import axios from 'axios';
+
 const Login = ({ setIsAuthenticated }) => {
     const [email, setEmail] = useState("");
     const [pass, setPassword] = useState("");
     const navigate = useNavigate();
 
     const handleSubmit = (e) => {
-        e.preventDefault(); // Evita el recargado de la página
+        e.preventDefault(); 
         loginAction(email, pass);
     };
 
     const loginAction = (email, pass) => {
-        fetch('http://localhost:4000/api/v1/employee/login', {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({ email: email, pass: pass })
+        axios.post("http://localhost:4000/api/v1/employee/login", {email, pass})
+        .then(response => { console.log(response);
+        }).catch(e =>{
+            console.log(e);
+            
         })
-        .then(response => response.json()) // Convierte la respuesta a JSON
-        .then(data => {
-            if (data.success) {
-                localStorage.setItem('token', data.token); // Guarda el token en localStorage
-                setIsAuthenticated(true);  // Llama a setIsAuthenticated si lo necesitas
-                navigate('/');  // Redirige a la ruta principal (privada)
-            } else {
-                alert('Credenciales incorrectas');
-            }
-        })
-        .catch(error => {
-            console.error("Error:", error);
-        });
     };
 
     return (
