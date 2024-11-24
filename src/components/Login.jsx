@@ -1,13 +1,14 @@
 import '../styles/login.css';
 import { useNavigate } from "react-router-dom";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 import axios from 'axios';
 
-const Login = ({ setIsAuthenticated }) => {
+const Login = () => {
     const [email, setEmail] = useState("");
     const [pass, setPassword] = useState("");
-    const navigate = useNavigate();
+    const Navigate = useNavigate();
+
 
     const handleSubmit = (e) => {
         e.preventDefault(); 
@@ -15,12 +16,29 @@ const Login = ({ setIsAuthenticated }) => {
     };
 
     const loginAction = (email, pass) => {
-        axios.post("http://localhost:4000/api/v1/employee/login", {email, pass})
-        .then(response => { console.log(response);
-        }).catch(e =>{
-            console.log(e);
-            
-        })
+
+        if(!email || !pass) {
+            alert('El campo de Email Y Password es necesario')  
+        }else{
+            axios.post("http://localhost:4000/api/v1/employee/login", {email, pass})
+                .then(response => { 
+                    const token = response.data.token;
+                    localStorage.setItem('authToken', token);
+                    Navigate('/home');
+                    
+                }).catch(e =>{
+                    if(e.responses){
+                        const status = e.response.status;
+                        if( status === 404){
+                            alert('Este usuario no xiste')
+                        }else if(status === 401){
+                            alert('Contraseña incorrecta')
+                        }
+                    }
+                })
+        }
+
+        
     };
 
     return (

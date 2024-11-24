@@ -5,6 +5,7 @@ import * as jwt_decode from 'jwt-decode';
 import PrivateRoutes from './PrivateRoot';
 
 import Login from '../components/Login';
+import HomePage from '../components/HomePage';
 
 export default function Root() {
   const [userRole, setUserRole] = useState(null); 
@@ -31,6 +32,7 @@ export default function Root() {
     <BrowserRouter>
       <Routes>
         <Route path='/login' element={<Login />} />
+        <Route path='/home' element={<HomePage />} />
 
         {
           userRole === 'Administrador App'
