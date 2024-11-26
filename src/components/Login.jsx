@@ -27,7 +27,7 @@ const Login = () => {
                     Navigate('/home');
                     
                 }).catch(e =>{
-                    if(e.responses){
+                    if(e.response){
                         const status = e.response.status;
                         if( status === 404){
                             alert('Este usuario no xiste')
@@ -35,6 +35,7 @@ const Login = () => {
                             alert('Contraseña incorrecta')
                         }
                     }
+                    
                 })
         }
 

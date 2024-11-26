@@ -36,7 +36,9 @@ const NavBar = () => {
             <ul>
                 {
                     userRol === 'Administrador Org' && (
-                        <li> <a href=""> aña</a></li>
+                        <div>
+                            <Link to='/organization'>O</Link>
+                        </div>
                     )
                 }
             </ul>
