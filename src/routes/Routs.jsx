@@ -6,6 +6,7 @@ import PrivateRoutes from './PrivateRoot';
 
 import Login from '../components/Login';
 import HomePage from '../components/HomePage';
+import Organization from '../components/Organization';
 
 export default function Root() {
   const [userRole, setUserRole] = useState(null); 
@@ -33,6 +34,8 @@ export default function Root() {
       <Routes>
         <Route path='/login' element={<Login />} />
         <Route path='/home' element={<HomePage />} />
+
+        <Route path='/organization' element={<Organization />} />
 
         {
           userRole === 'Administrador App'

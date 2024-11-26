@@ -1,0 +1,21 @@
+.contenedorCard{
+    display: flex;
+    justify-content: space-around;
+    justify-items: center;
+}
+
+button{
+    max-width: 60px;
+}
+
+.card{
+    background-color: aquamarine;
+    padding: 10px;
+    border-radius: 10px; 
+}
+
+.bbuttonDiv{
+    display: flex;
+    gap: 10px;
+}
+
