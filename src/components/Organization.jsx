@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 
 import axios from 'axios';
-import { ToastContainer, toast } from 'react-toastify';
+import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 import NavBar from './Navbar';
@@ -13,8 +13,14 @@ const Organization = () => {
 
     const [listOrg, setListOrg] = useState([]);
     const [showForm, setShowForm] = useState(false);
+    const [organizationEdit, setOrganizationEdit] = useState(null);
 
     const token = localStorage.getItem('authToken');
+
+    const handleEditOrganization = (organization) => {
+        setOrganizationEdit(organization)
+        setShowForm(true);
+    }
 
 
     //Funcion para traer datos de la API 
@@ -32,10 +38,12 @@ const Organization = () => {
                 })
     }
 
+    //useEfect para que solo haga la peticion cuando la pagina cargue
     useEffect(() => {
         gettOrganization();
     }, []);
 
+    //Funcion para eliminar los datos
     const deleteOrganization = (orgId) => {
 
             const confirmDelete = window.confirm('¿Estás seguro de que deseas eliminar esta organización?');
@@ -77,19 +85,24 @@ const Organization = () => {
                 // Loguear el error para depuración
                 console.error('Error detallado:', err);
             })
-        }
+    }
     
 
     return(
         <>
             <NavBar />
             <h2>Organizaciones</h2>
-            <button onClick={()=> setShowForm(true)}>Agregar</button>
+            <button onClick={() =>{
+                setOrganizationEdit(null);
+                setShowForm(true);
+            }}>Agregar</button>
+
             <Modal 
             isOpen={showForm} 
             closeModal={() => setShowForm(false)} 
             tokenOrg={token}
             refreshOrg={gettOrganization}
+            organizationEdit={organizationEdit}
             />
 
             <div className='contenedorCard'>
@@ -101,7 +114,7 @@ const Organization = () => {
                             <p>{organization.codigo}</p>
                             <div className='bbuttonDiv'>
                                 <button onClick={()=> deleteOrganization(organization._id)}>Eliminar</button>
-                                <button>Editar</button>
+                                <button onClick={() => handleEditOrganization(organization) }>Editar</button>
                             </div>
                         </div>
                     ))

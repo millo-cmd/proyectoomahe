@@ -1,71 +1,119 @@
 
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 
 import axios from 'axios';
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
- const Modal = ({isOpen, closeModal, tokenOrg, refreshOrg}) => {
+
+ const Modal = ({
+    isOpen, 
+    closeModal, 
+    tokenOrg, 
+    refreshOrg,
+    organizationEdit
+}) => {
     const [name, setName] = useState('');
     const [typeOrg, setTypeOrg] = useState('');
     const [codeOrg, setCodeOrg] = useState('');
     const [deleteOrg, setDeleteOrg] = useState(false);
+    const [formData, setFormData] = useState({
+        nombre: '',
+        tipo: '',
+        codigo: ''
+    });
 
+    useEffect(() =>{
+        if(organizationEdit){
+            setFormData({
+                nombre: organizationEdit.nombre || '',
+                tipo: organizationEdit.tipo || '',
+                codigo: organizationEdit.codigo || '',
+                liminado: deleteOrg
+            });
+        }else {
+            setFormData({
+                nombre: '',
+                tipo: '',
+                codigo: '',
+                eliminado: deleteOrg
+            })
+        }
+    }, [organizationEdit])
+
+    const handleChange = (e) => {
+        const {name, value} = e.target;
+        setFormData(prevState => ({
+            ...prevState,
+            [name] : value
+        }));
+    };
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+
+        if(organizationEdit){
+            axios.put(`http://localhost:4000/api/v1/organization/update/${organizationEdit._id}`, 
+                formData,
+                {
+                    headers: {
+                        'Authorization': `Bearer ${tokenOrg}`,
+                        'Content-Type': 'application/json'
+                    }
+                }
+            ).then((response) => {
+                toast.success('Organización actualizada correctamente');
+                closeModal();
+                refreshOrg();
+            }).catch((err) => {
+                handleError(err);
+            });
+        } else{
+            axios.post('http://localhost:4000/api/v1/organization/add', 
+                formData,
+                {
+                    headers: {
+                        'Authorization': `Bearer ${tokenOrg}`,
+                        'Content-Type': 'application/json'
+                    }
+                }
+            ).then((response) => {
+                toast.success('Organización agregada correctamente');
+                closeModal();
+                refreshOrg();
+            }).catch((err) => {
+                handleError(err);
+            });
+        }
+    }
+
+    const handleError = (err) => {
+        if(err.response){
+            toast.error(err.response.data.message || 'Error al procesar la organización');
+        } else if (err.request){
+            toast.error('No se pudo conectar con el servidor');
+            console.log('Error al procesar la solicitud');   
+        } else {
+            toast.error('Error al procesar la solicitud');
+        }
+    };
 
     if(!isOpen) return null;
     
 
-    const addAction = (e) => {
-        e.preventDefault();
-        addOrganization(name, typeOrg, codeOrg, deleteOrg)
-    }
-
-    const addOrganization = (name, typeOrg, codeOrg,  deleteOrg) => {
-        axios.post('http://localhost:4000/api/v1/organization/add',
-            {
-                nombre: name, 
-                tipo: typeOrg, 
-                codigo: codeOrg, 
-                eliminado: deleteOrg
-            },
-            {
-            headers: {
-                'Authorization': `Bearer ${tokenOrg}`,
-                'Content-Type': 'application/json'
-            }
-
-        }).then((response) => {
-            alert('se agrego correctamente: ')
-            setName('');
-            setTypeOrg('');
-            setCodeOrg('');
-
-            closeModal();
-            refreshOrg();
-
-        }).catch((err) => {
-            if(err.responce){
-                alert(err.responce.data.message || 'error al agregar la organizacion')
-            }else if(err.request){
-                alert('no se recibio respuesta del servidor');
-                console.log(err.request);
-                
-            } else{
-                alert('error al procesar la solicitud')
-            }
-        });
-    }
-
 
   return (
     <div>
-        <h3>add organization</h3>
-        <form onSubmit={addAction}>
+        <h3>{organizationEdit ? 'Editar Organización' : 'Agregar Organización'}</h3>
+        <form onSubmit={handleSubmit}>
                     <div>
                         <label htmlFor="name">Name</label>
                         <input
                             type="text"
                             id="name"
-                            value={name}
-                            onChange={(e) => setName(e.target.value)}
+                            name="nombre"
+                            value={formData.nombre}
+                            onChange={handleChange}
                             required
                         />
                     </div>
@@ -74,8 +122,9 @@ import axios from 'axios';
                         <input
                             type="text"
                             id="type"
-                            value={typeOrg}
-                            onChange={(e) => setTypeOrg(e.target.value)}
+                            name="tipo"
+                            value={formData.tipo}
+                            onChange={handleChange}
                             required
                         />
                     </div>
@@ -84,12 +133,15 @@ import axios from 'axios';
                         <input
                             type="text"
                             id="code"
-                            value={codeOrg}
-                            onChange={(e) => setCodeOrg(e.target.value)}
+                            name="codigo"
+                            value={formData.codigo}
+                            onChange={handleChange}
                             required
                         />
                     </div>
-                    <button type="submit">Ingresar</button>
+                    <button type="submit">
+                        {organizationEdit ? 'Actualizar' : 'Agregar'}
+                    </button>
             </form>
 
         <button onClick={closeModal}>Cancelar</button>

@@ -7,7 +7,7 @@ import '../styles/navbar.css'
  
 
 const NavBar = () => {
-    const [userRol, setUserRol] = useState();
+    const [userRol, setUserRol] = useState(null);
 
     useEffect(() => {
         const token = localStorage.getItem('authToken');
@@ -24,22 +24,17 @@ const NavBar = () => {
         }else{
             console.log('No se encontró un token en el almacenamiento local');
         }
-    })
-
+    }, []); // Añade un array de dependencias vacío
 
     return (
         <div className="divBar">
             <ul>
-                {
-                    userRol === 'Administrador App' && (
-                        <div>
-                            <Link to='/organization'>O</Link>
-                        </div>
-                    )
-                }
+                {userRol === 'Administrador App' && (
+                    <div>
+                        <Link to='/organization'>O</Link>
+                    </div>
+                )}
             </ul>
-            
-            
         </div>
     );
 };
