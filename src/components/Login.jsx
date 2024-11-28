@@ -1,6 +1,6 @@
 import '../styles/login.css';
 import { useNavigate } from "react-router-dom";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 import axios from 'axios';
 
@@ -9,6 +9,13 @@ const Login = () => {
     const [pass, setPassword] = useState("");
     const Navigate = useNavigate();
 
+
+    useEffect(() => {
+        const tok = localStorage.getItem('authToken')
+        if (!tok) {
+
+        }
+    })
 
     const handleSubmit = (e) => {
         e.preventDefault(); 
@@ -25,6 +32,7 @@ const Login = () => {
                     const token = response.data.token;
                     localStorage.setItem('authToken', token);
                     Navigate('/home');
+                    
                     
                 }).catch(e =>{
                     if(e.response){

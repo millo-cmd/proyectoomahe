@@ -9,7 +9,6 @@ import '../styles/navbar.css'
 const NavBar = () => {
     const [userRol, setUserRol] = useState();
 
-
     useEffect(() => {
         const token = localStorage.getItem('authToken');
 
@@ -17,10 +16,7 @@ const NavBar = () => {
             try{
                 const data = jwtDecode(token);
                 const rol = data.rol;
-                setUserRol(rol);
-
-                console.log(rol);
-                
+                setUserRol(rol);          
                 
             }catch(e){
                 console.log('error al decodificar el token: ', e.message);
@@ -35,7 +31,7 @@ const NavBar = () => {
         <div className="divBar">
             <ul>
                 {
-                    userRol === 'Administrador Org' && (
+                    userRol === 'Administrador App' && (
                         <div>
                             <Link to='/organization'>O</Link>
                         </div>

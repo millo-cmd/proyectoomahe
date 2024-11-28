@@ -12,7 +12,9 @@ export default function Root() {
   const [userRole, setUserRole] = useState(null); 
   const [loading, setLoading] = useState(true);  
 
+  
   useEffect(() => {
+
     const token = localStorage.getItem('token');
     if (token) {
       try {
