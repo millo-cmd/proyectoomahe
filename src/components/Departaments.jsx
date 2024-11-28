@@ -3,14 +3,11 @@ import React, { useEffect, useState } from 'react'
 import axios from 'axios'
 
 import NavBar from './Navbar';
+import '../styles/Departaments.css';
 
 const Departaments = () => {
 
     const [listDep, setListDep] = useState([]);
-    
-    useEffect(() =>{
-        gettDepartament();
-    }, []);
 
     const token = localStorage.getItem('authToken');
 
@@ -20,15 +17,16 @@ const Departaments = () => {
                 'Authorization': `Bearer ${token}`
             }
         }).then((response) => {
-            setListDep(response.data.departaments)
-            console.log(listDep);
-            
+            setListDep(response.data.departments)
         }).catch((err) => {
             alert(err.message);
         })
     }
-    
 
+    useEffect(() =>{
+        gettDepartament();
+    }, []);
+    
   return (
   <>
     <NavBar />
@@ -38,7 +36,14 @@ const Departaments = () => {
     </button>
 
     <div className='contenedorDep'>
-        
+        {
+            listDep.map((departaments) => (
+                <div key={departaments._id} className='card'>
+                    <h3>{departaments.nombre}</h3>
+                    <p>{departaments.codigo}</p>
+                </div>
+            ))
+        }
     </div>
   </>
   )
